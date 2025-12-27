@@ -41,6 +41,10 @@ const UserSchema = mongoose.Schema({
     avatarId:{
         type: String
     },
+    isAdmin:{
+        type: Boolean,
+        default: false,
+    }
     
 },
 {

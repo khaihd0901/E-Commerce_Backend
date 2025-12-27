@@ -71,7 +71,7 @@ export const signIn = async (req, res) => {
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: true,
-            sameSite: 'none',
+            sameSite: 'none', //access from differnt domain
             maxAge: REFRESH_TOKEN_TTL
         });
         //return access token in resposne

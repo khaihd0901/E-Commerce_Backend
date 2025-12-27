@@ -1,7 +1,10 @@
 import express from 'express'
-import { authMe } from '../controllers/userController.js';
+import { getUsers,getUserById, updateUser, deleteUser } from '../controllers/userController.js';
 
 const router = express.Router();
-router.get('/me', authMe);
+router.get('/all-users', getUsers);
+router.get('/:id', getUserById);
+router.put('/:id', updateUser);
+router.delete('/:id', deleteUser);
 
 export default router;

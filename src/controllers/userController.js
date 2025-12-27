@@ -1,4 +1,4 @@
-const User = require("../models/User");
+import User from '../models/User.js';
 
 // CREATE user
 // export const createUser = async (req, res) => {
@@ -19,7 +19,7 @@ const User = require("../models/User");
 // READ all users
 export const getUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find().select('-hashedPassword');
     res.status(200).json({
       success: true,
       data: users
@@ -35,7 +35,7 @@ export const getUsers = async (req, res) => {
 // READ single user by ID
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id).select('-hashedPassword');
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
