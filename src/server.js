@@ -4,6 +4,7 @@ import cookies from 'cookie-parser'
 import {connectDB} from './libs/db.js';
 import authRoute from './routes/authRoute.js'
 import userRoute from './routes/userRoute.js'
+import productRoute from './routes/productRoute.js'
 import {protectedRoute} from './middlewares/authMiddleware.js'
 
 
@@ -18,6 +19,7 @@ app.use(cookies())
 
 // public routes
 app.use('/api/auth', authRoute)
+app.use('/api/product', productRoute)
 
 // private routes
 app.use(protectedRoute)
