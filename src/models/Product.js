@@ -2,11 +2,11 @@ import mongoose from "mongoose";
 
 const ProductSchema = mongoose.Schema(
   {
-    name: {
+    productName: {
       type: String,
       required: true,
       trim: true,
-      unique: true,
+      unique: false,
     },
 
     des: {
@@ -37,12 +37,13 @@ const ProductSchema = mongoose.Schema(
 
     categories: [
       {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "Category",
       },
+      {
+        default: []
+      }
     ],
-
-    images: [ImageSchema],
 
     weight: {
       value: { type: Number, min: 0 },
@@ -73,7 +74,7 @@ const ProductSchema = mongoose.Schema(
     },
 
     createdBy: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
   },

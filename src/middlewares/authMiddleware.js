@@ -30,3 +30,11 @@ export const protectedRoute = (req, res, next) =>{
         return res.status(500).json({message: "system error"})
     }
 }
+export const isAdmin = (req, res, next) =>{
+    const user = req.user;
+    if(user.isAdmin === false){
+        return res.status(403).json({message: "You are not admin, access denied"})
+    }else{
+        next();
+    }
+}
