@@ -1,5 +1,7 @@
 import Product from "../models/Product.js";
 import User from "../models/User.js";
+import {uploadImages} from "../utils/cloudinary.js";
+import fs from "fs";
 // Create a product
 export const createProduct = async (req, res) => {
   try {
@@ -163,3 +165,30 @@ export const ratingProduct = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const uploadProductImages = async (req, res) => {
+  console.log(req.files)
+  try{
+    const uploader = (path) => uploadImages(path);
+    const urls = [];
+    const files = req.files;
+    for (const file of files){
+      const {path} = file;
+      const newPath = await uploader(path);
+      urls.push(newPath);
+      fs.unlinkSync(path);
+    }
+    const findProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        images: urls.map((file) => {
+          return file;
+        }),
+      },
+      { new: true }
+    );
+    res.status(200).json(findProduct);
+  }catch(error){
+    res.status(500).json({error: error.message});
+  }
+}
