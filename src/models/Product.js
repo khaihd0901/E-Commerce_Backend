@@ -44,11 +44,12 @@ const ProductSchema = mongoose.Schema({
   },
   ratings: [
     {
-      start: Number,
+      star: Number,
       postedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
+      comment: String,
     },
   ],
   ratingsQuantity: {

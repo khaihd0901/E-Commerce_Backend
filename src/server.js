@@ -6,6 +6,9 @@ import authRoute from './routes/authRoute.js'
 import userRoute from './routes/userRoute.js'
 import productRoute from './routes/productRoute.js'
 import categoryRoute from './routes/categoryRoute.js'
+import brandRoute from './routes/brandRoute.js'
+import couponRoute from './routes/couponRoute.js'
+import cookieParser from 'cookie-parser';
 
 
 dotenv.config();
@@ -16,15 +19,16 @@ const PORT = process.env.PORT || 5001;
 //middlewares
 app.use(express.json());
 app.use(cookies())
+app.use(cookieParser());
+
 
 
 app.use('/api/auth', authRoute)
-
 app.use('/api/user', userRoute)
-
+app.use('/api/brand', brandRoute)
 app.use('/api/category', categoryRoute)
-
 app.use('/api/product', productRoute)
+app.use('/api/coupon', couponRoute)
 
 connectDB().then(()=>{
 app.listen(PORT, ()=>{

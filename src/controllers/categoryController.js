@@ -4,6 +4,9 @@ import Category from '../models/Category.js';
 export const createCategory = async (req, res) => {
     try {
         const { categoryName } = req.body;
+        if(!categoryName) {
+            return res.status(400).json({ error: 'Category name is required' });
+        }
         const category = new Category({ categoryName});
         await category.save();
         res.status(201).json(category);
@@ -16,6 +19,9 @@ export const createCategory = async (req, res) => {
 export const getCategories = async (req, res) => {
     try {
         const categories = await Category.find();
+        if(categories.length === 0) {
+            return res.status(404).json({ error: 'No categories found' });
+        }
         res.status(200).json(categories);
     } catch (error) {
         res.status(500).json({ error: error.message });

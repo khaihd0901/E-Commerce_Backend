@@ -45,8 +45,7 @@ export const sendResetEmail = async (email, data) => {
     try {
         await transporter.sendMail({
             from: process.env.EMAIL_USER,
-            to: email,
-            data
+            ...data
         });
     } catch (error) {
         console.error('Error sending email:', error);
