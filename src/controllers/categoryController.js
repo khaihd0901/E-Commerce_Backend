@@ -3,8 +3,8 @@ import Category from '../models/Category.js';
 // Create a category
 export const createCategory = async (req, res) => {
     try {
-        const { name, description } = req.body;
-        const category = new Category({ name, description });
+        const { categoryName } = req.body;
+        const category = new Category({ categoryName});
         await category.save();
         res.status(201).json(category);
     } catch (error) {

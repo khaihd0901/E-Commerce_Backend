@@ -17,13 +17,14 @@ const PORT = process.env.PORT || 5001;
 app.use(express.json());
 app.use(cookies())
 
-// public routes
-app.use('/api/auth', authRoute)
-app.use('/api/product', productRoute)
 
-// private routes
+app.use('/api/auth', authRoute)
+
 app.use('/api/user', userRoute)
+
 app.use('/api/category', categoryRoute)
+
+app.use('/api/product', productRoute)
 
 connectDB().then(()=>{
 app.listen(PORT, ()=>{
