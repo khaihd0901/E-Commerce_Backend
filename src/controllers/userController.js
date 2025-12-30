@@ -1,8 +1,9 @@
 import User from "../models/User.js";
-import createPasswordResetToken from "../models/User.js";
+import Product from "../models/Product.js";
 import Session from "../models/Session.js";
-import crypto from "crypto";
 import { sendResetEmail } from "../utils/emailHandler.js";
+import Cart from "../models/Cart.js";
+import Coupon from "../models/Coupon.js";
 
 // CREATE user
 // export const createUser = async (req, res) => {
@@ -194,3 +195,118 @@ export const resetPassword = async (req, res) => {
     });
   }
 };
+export const getWishlist = async(req,res)=>{
+  const {_id} = req.user;
+  try{
+    const wishList = await User.findById(_id).select("wishList");
+    res.status(200).json(wishList);
+  }catch(error){
+    res.status(500).json({error: error.message});
+  }
+}
+
+export const userCart = async (req,res) =>{
+  const {_id} = req.user;
+  const {cart} = req.body;
+  try{
+    const user = await User.findById(_id);
+    if(!user){
+      return res.status(404).json({message: "User not found"});
+    }
+    let products = [];
+    const alreadyExist = await Cart.findOne({userId: user._id});
+    if(alreadyExist){
+      await alreadyExist.deleteOne();  
+    }
+    if(alreadyExist?.cart?.length > 0){
+      alreadyExist.cart = [];
+      await alreadyExist.save();
+    }
+    for(let i=0; i<cart.length; i++){
+      let object = {};
+      object.prodId = cart[i].prodId;
+      object.quantity = cart[i].quantity;
+      let getPrice = await Product.findById(cart[i].prodId).select("price").exec();
+      object.price = getPrice?.price;
+      products.push(object);
+    }
+
+    let cartTotal = 0;
+    for (let i = 0; i < products.length; i++) {
+      cartTotal += products[i].price * products[i].quantity;
+    }
+    let newCart = await new Cart({
+      userId: user?._id,
+      items: products,
+      cartTotal: cartTotal,
+    }).save();
+    // await User.findByIdAndUpdate(_id, {cart: newCart.items}, {new: true});
+    res.status(200).json(newCart);
+  }catch(error){
+    res.status(500).json({error: error.message});
+  }
+}
+ 
+export const getUserCart = async (req,res) =>{
+  const {_id} = req.user;
+  try{
+    const cart = await Cart.findOne({userId: _id}).populate("items.prodId");
+    if(!cart){
+      return res.status(404).json({message: "Cart not found"});
+    }   
+    res.status(200).json(cart);
+  }catch(error){
+    res.status(500).json({error: error.message});
+  }
+}
+ export const emptyCart = async (req, res) => {
+   const { _id } = req.user;
+    try {
+      await Cart.findOneAndRemove({ userId: _id });
+      res.status(200).json({
+        success: true,
+        message: "Cart emptied successfully",
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+ }
+ export const applyCoupon = async (req, res) => {
+   const { _id } = req.user;
+   const { coupon } = req.body;
+    try {
+      const validCoupon = await Coupon.findOne({ code: coupon });
+      console.log(validCoupon)
+
+      if(validCoupon === null || validCoupon.isActive === false || validCoupon.expiryDate < new Date()){
+        return res.status(404).json({message: "Invalid coupon"});
+      }
+      const user = await User.findOne({ _id });
+      if(!user){
+        return res.status(404).json({message: "User not found"});
+      }
+      let { cartTotal } = await Cart.findOne({ userId: user._id }).populate("items.prodId");
+
+      if(cartTotal < validCoupon.minPurchaseAmount){
+        return res.status(400).json({message: "Cart total is less than minimum purchase accept for this coupon is: " + validCoupon.minPurchaseAmount});
+      }
+      let totalAfterDiscount = (
+        cartTotal -
+        (cartTotal * validCoupon.discountValue) / 100
+      ).toFixed(2);
+      await Cart.findOneAndUpdate(
+        { userId: user._id },
+        { totalAfterDiscount },
+        { new: true }
+      );
+      res.status(200).json({ totalAfterDiscount });
+    }catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }

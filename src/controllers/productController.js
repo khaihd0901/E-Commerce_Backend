@@ -1,6 +1,6 @@
 import Product from "../models/Product.js";
 import User from "../models/User.js";
-import {uploadImages} from "../utils/cloudinary.js";
+import {uploadImages, deleteImage} from "../utils/cloudinary.js";
 import fs from "fs";
 // Create a product
 export const createProduct = async (req, res) => {
@@ -167,27 +167,33 @@ export const ratingProduct = async (req, res) => {
 };
 
 export const uploadProductImages = async (req, res) => {
-  console.log(req.files)
   try{
-    const uploader = (path) => uploadImages(path);
+    const uploader = (path) => uploadImages(path, 'images');
     const urls = [];
     const files = req.files;
+    console.log(files)
     for (const file of files){
       const {path} = file;
       const newPath = await uploader(path);
       urls.push(newPath);
       fs.unlinkSync(path);
     }
-    const findProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      {
-        images: urls.map((file) => {
-          return file;
-        }),
-      },
-      { new: true }
-    );
-    res.status(200).json(findProduct);
+    const images = urls.map((file) => {
+      return file;
+    })
+    res.json(images);
+  
+  }catch(error){
+    res.status(500).json({error: error.message});
+  }
+}
+
+export const deleteProductImage = async (req, res) => {
+  try{
+    const public_id = req.params.id;
+    const deletedImage = await deleteImage(public_id);
+    console.log("deleted")
+    res.json(deletedImage);
   }catch(error){
     res.status(500).json({error: error.message});
   }

@@ -6,7 +6,7 @@ dotenv.config();
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET, // Click 'View API Keys' above to copy your API secret
+    api_secret: process.env.CLOUDINARY_API_SECRET,
   });
 
   // Upload an image
@@ -17,6 +17,7 @@ dotenv.config();
         resolve(
           {
             url: result.secure_url,
+            asset_id: result.asset_id,  
             public_id: result.public_id,
           },
           { resource_type: "auto" }
@@ -24,21 +25,21 @@ dotenv.config();
       });
     });
   };
-  // Optimize delivery by resizing and applying auto-format and auto-quality
-  export const optimizeUrl = cloudinary.url("shoes", {
-    fetch_format: "auto",
-    quality: "auto",
-  });
 
-  console.log(optimizeUrl);
-
-  // Transform the image: auto-crop to square aspect_ratio
-  export const autoCropUrl = cloudinary.url("shoes", {
-    crop: "auto",
-    gravity: "auto",
-    width: 500,
-    height: 500,
-  });
-
-  console.log(autoCropUrl);
+  // Delete an image
+  export const deleteImage = async (public_id) => {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.destroy(public_id, (error, result) => {
+        if (error) return reject(error);
+        resolve(
+          {
+            url: result.secure_url,
+            asset_id: result.asset_id,  
+            public_id: result.public_id,
+          },
+          { resource_type: "auto" }
+        );
+      });
+    });
+  };
 
