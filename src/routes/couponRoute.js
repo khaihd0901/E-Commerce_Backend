@@ -5,8 +5,10 @@ import {createCoupon, getAllCoupons, getCouponById, updateCoupon, deleteCoupon }
 const router = express.Router();
 router.post('/create-coupon',protectedRoute,isAdmin, createCoupon);
 router.get('/',protectedRoute,isAdmin, getAllCoupons);
-router.get('/:id', getCouponById);
 router.put('/update/:id',protectedRoute,isAdmin, updateCoupon);
 router.delete('/:id',protectedRoute,isAdmin, deleteCoupon);
+
+router.get('/:id', getCouponById);
+
 
 export default router;

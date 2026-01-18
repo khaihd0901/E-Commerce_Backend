@@ -5,16 +5,15 @@ import User from "../models/User.js";
 import Session from "../models/Session.js";
 import { sendVerificationEmail } from "../utils/emailHandler.js";
 
-const ACCESS_TOKEN_TTL = "30m";
+const ACCESS_TOKEN_TTL = "60m";
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000; //14 days
 
 export const signUp = async (req, res) => {
   try {
-    const { username, password, email, phone, firstName, lastName } = req.body;
-    if (!username || !password || !email || !phone || !firstName || !lastName) {
+    const { username, email, password } = req.body;
+    if (!username || !password || !email) {
       return res.status(400).json({
-        message:
-          "Cannot miss username, password, email, phone, firstName, lastName !!!",
+        message: "Cannot miss username, password, email !!!",
       });
     }
     //check exit user?
@@ -27,8 +26,6 @@ export const signUp = async (req, res) => {
       username,
       password,
       email,
-      phone,
-      displayName: `${firstName} ${lastName}`,
     });
     //return
     return res.sendStatus(204);
@@ -37,11 +34,12 @@ export const signUp = async (req, res) => {
     res.status(500).json({ message: "System Error" });
   }
 };
+
 export const signIn = async (req, res) => {
   try {
     //get input from req.body
     const { username, password } = req.body;
-    console.log(password)
+    console.log(password);
     if (!username || !password) {
       res.status(400).json({ message: "missing username or password !!!" });
     }
@@ -84,14 +82,81 @@ export const signIn = async (req, res) => {
       maxAge: REFRESH_TOKEN_TTL,
     });
     //return access token in resposne
-    return res
-      .status(200)
-      .json({ message: `User ${user.displayName} login success`, accessToken });
+    return res.status(200).json({
+      _id: user?._id,
+      email: user?.email,
+      message: `User ${user.userName} login success`,
+      accessToken,
+    });
   } catch (error) {
     console.log("error when call signin", error);
     res.status(500).json({ message: "System Error" });
   }
 };
+
+export const adminLogin = async (req, res) => {
+  try {
+    //get input from req.body
+    const { email, password } = req.body;
+    if (!email || !password) {
+      res.status(400).json({ message: "missing email or password !!!" });
+    }
+    //call hasedPassword on data base and compare with password user input
+    const user = await User.findOne({ email });
+    if (user.isAdmin !== true) throw new Error("Not Authorised");
+    if (!user) throw new Error("User not found");
+    if (!user.password) throw new Error("User has no stored password");
+    if (!user) {
+      return res
+        .status(401)
+        .json({ massage: "email or Password not correct !!!" });
+    }
+
+    const passwordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!passwordCorrect) {
+      return res
+        .status(401)
+        .json({ message: "email or Password not correct !!!" });
+    }
+    //if valid create a accesstoken with jwt
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: ACCESS_TOKEN_TTL }
+    );
+    //create refress token
+    const refreshToken = crypto.randomBytes(64).toString("hex");
+    //store refress token in session
+    await Session.create({
+      userId: user._id,
+      refreshToken,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL),
+    });
+    //return token to client throuth cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none", //access from differnt domain
+      maxAge: REFRESH_TOKEN_TTL,
+    });
+    //return access token in resposne
+    return res.status(200).json({
+      _id: user?._id,
+      email: user?.email,
+      message: `User ${user.suerName} login success`,
+      accessToken,
+    });
+  } catch (error) {
+    console.log("error when call signin", error);
+    res.status(500).json({ message: "System Error" });
+  }
+};
+
+export const authMe = async (req, res) => {
+  res.status(200).json(req.user);
+};
+
 export const signOut = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
@@ -115,12 +180,12 @@ export const sendOTP = async (req, res) => {
   let user = await User.findOne({ email });
   if (!user) {
     return res.status(404).json({
-      message: "User with this email does not exist"
+      message: "User with this email does not exist",
     });
   }
 
   const otp = user.createOTP();
-  console.log(otp)
+  console.log(otp);
   await user.save({ validateBeforeSave: false });
 
   console.log("OTP:", otp);
@@ -128,26 +193,23 @@ export const sendOTP = async (req, res) => {
   sendVerificationEmail(email, otp);
 
   res.json({
-    message: "OTP sent successfully"
+    message: "OTP sent successfully",
   });
 };
- //Verify OTP Controller
+//Verify OTP Controller
 // POST /api/auth/verify-otp
 export const verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
-  const hashedOTP = crypto
-    .createHash("sha256")
-    .update(otp)
-    .digest("hex");
+  const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
   const user = await User.findOne({
     email,
     otp: hashedOTP,
-    otpExpires: { $gt: Date.now() }
+    otpExpires: { $gt: Date.now() },
   });
 
   if (!user) {
     return res.status(400).json({
-      message: "Invalid or expired OTP"
+      message: "Invalid or expired OTP",
     });
   }
 
@@ -158,8 +220,6 @@ export const verifyOTP = async (req, res) => {
   await user.save();
 
   res.json({
-    message: "OTP verified successfully"
+    message: "OTP verified successfully",
   });
 };
-
-

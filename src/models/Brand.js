@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 const brandSchema = new mongoose.Schema({
-    brandName: {
+    name: {
         type: String,
         required: true,
         unique: true

@@ -8,7 +8,7 @@ const OrderSchema = new mongoose.Schema({
     },
     items: [
         {
-            productId: {
+            prodId: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: 'Product',
                 required: true
@@ -33,14 +33,46 @@ const OrderSchema = new mongoose.Schema({
         enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
         default: 'pending'
     },
-    shippingAddress: {
-        street: String,
-        city: String,
-        state: String,
-        zipCode: String,
-        country: String
-    },
+    // shippingAddress: {
+    //     street: String,
+    //     city: String,
+    //     state: String,
+    //     zipCode: String,
+    //     country: String
+    // },
     paymentMethod: String,
+     paymentIntent: {
+      id: {
+        type: String,
+      },
+      method:{
+        type: String, 
+        enum: [
+          "internet banking",
+          "cod",
+        ],
+        default: "cod",
+        required: true
+    },
+      amount: {
+        type: Number,
+        required: true
+      },
+      status: {
+        type: String,
+        enum: [
+          "requires_payment_method",
+          "requires_confirmation",
+          "processing",
+          "succeeded",
+          "canceled",
+        ],
+        createdAt: {
+        type: Date,
+        default: Date.now
+    },
+      },
+    },
     createdAt: {
         type: Date,
         default: Date.now

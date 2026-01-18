@@ -6,6 +6,9 @@ export const protectedRoute = (req, res, next) =>{
         //get token from header
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(" ")[1];
+
+        
+        console.log(authHeader)
         //verify token
         if(!token){
             return res.status(401).json({message: "Token not found !!!"});

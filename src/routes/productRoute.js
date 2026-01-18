@@ -7,12 +7,14 @@ const router = express.Router();
 
 router.post('/create-product',protectedRoute,isAdmin, createProduct);
 router.get('/', getProducts);
-router.get('/:id', getProductById);
 router.put('/update/:id',protectedRoute,isAdmin, updateProduct);
 router.delete('/:id',protectedRoute,isAdmin, deleteProduct);
 router.post('/wishlist', protectedRoute, addToWishlist);
 router.post('/rating', protectedRoute, ratingProduct);
 router.put("/upload", protectedRoute, isAdmin, uploadPhoto.array("images", 5),productImageReSize,uploadProductImages)
 router.delete("/delete-image/:id", protectedRoute, isAdmin, deleteProductImage)
+
+router.get('/:id', getProductById);
+
 
 export default router;

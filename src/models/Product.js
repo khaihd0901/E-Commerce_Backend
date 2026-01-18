@@ -7,6 +7,10 @@ const ProductSchema = mongoose.Schema({
     trim: true,
     unique: false,
   },
+  brand: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Brand",
+  },
   des: {
     type: String,
     trim: true,
@@ -16,10 +20,7 @@ const ProductSchema = mongoose.Schema({
     required: true,
     min: 0,
   },
-  color: {
-    type: String,
-    trim: true, 
-  },
+  tags: [],
   images: [],
   stock: {
     type: Number,

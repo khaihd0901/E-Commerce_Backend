@@ -9,6 +9,9 @@ import categoryRoute from './routes/categoryRoute.js'
 import brandRoute from './routes/brandRoute.js'
 import couponRoute from './routes/couponRoute.js'
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
+
+//config dotenv 
 
 
 dotenv.config();
@@ -20,6 +23,7 @@ const PORT = process.env.PORT || 5001;
 app.use(express.json());
 app.use(cookies())
 app.use(cookieParser());
+app.use(cors({origin: "http://localhost:5173", credentials:true}));
 
 
 

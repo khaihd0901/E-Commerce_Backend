@@ -3,8 +3,8 @@ import Brand from '../models/Brand.js';
 // Create a new brand
 export const createBrand = async (req, res) => {
     try {
-        const { brandName, description } = req.body;
-        const brand = new Brand({ name: brandName, description });
+        const { name } = req.body;
+        const brand = new Brand({ name: name });
         await brand.save();
         res.status(201).json({ message: 'Brand created successfully', brand });
     } catch (error) {

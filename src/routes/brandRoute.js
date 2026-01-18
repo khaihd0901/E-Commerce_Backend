@@ -5,8 +5,10 @@ import {createBrand, getAllBrands, getBrandById, updateBrand, deleteBrand } from
 const router = express.Router();
 router.post('/create-brand',protectedRoute,isAdmin, createBrand);
 router.get('/', getAllBrands);
-router.get('/:id', getBrandById);
 router.put('/update/:id',protectedRoute,isAdmin, updateBrand);
 router.delete('/:id',protectedRoute,isAdmin, deleteBrand);
+
+router.get('/:id', getBrandById);
+
 
 export default router;

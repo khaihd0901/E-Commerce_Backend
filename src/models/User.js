@@ -23,18 +23,12 @@ const UserSchema = mongoose.Schema(
     },
     phone: {
       type: Number,
-      required: true,
       trim: true,
       unique: true,
     },
     address: {
       type: String,
       lowercase: true,
-      trim: true,
-    },
-    displayName: {
-      type: String,
-      required: true,
       trim: true,
     },
     avatarUrl: {
