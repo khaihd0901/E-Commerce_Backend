@@ -364,6 +364,7 @@ export const createOrder = async (req, res) => {
           update: {
             $inc: {
               stock: -count,
+              sold: +count
             },
           },
         },

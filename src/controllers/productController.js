@@ -168,10 +168,12 @@ export const ratingProduct = async (req, res) => {
 
 export const uploadProductImages = async (req, res) => {
   try{
+    console.log(req.body)
     const uploader = (path) => uploadImages(path, 'images');
     const urls = [];
     const files = req.files;
     console.log(files)
+
     for (const file of files){
       const {path} = file;
       const newPath = await uploader(path);
