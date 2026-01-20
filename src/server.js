@@ -10,6 +10,7 @@ import brandRoute from './routes/brandRoute.js'
 import couponRoute from './routes/couponRoute.js'
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import { errorHandler, notFound } from './middlewares/errorHandler.js';
 
 //config dotenv 
 
@@ -25,6 +26,8 @@ app.use(cookies())
 app.use(cookieParser());
 app.use(cors({origin: "http://localhost:5173", credentials:true}));
 
+app.use(errorHandler);
+app.use(notFound);
 
 
 app.use('/api/auth', authRoute)

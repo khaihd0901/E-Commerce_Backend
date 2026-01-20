@@ -33,9 +33,8 @@ const ProductSchema = mongoose.Schema({
     min: 0,
   },
   category: {
-    type: String,
-    trim: true,
-    required: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Category",
   },
   isPublished: {
     type: Boolean,
