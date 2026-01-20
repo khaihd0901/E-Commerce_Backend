@@ -82,7 +82,6 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
   let { removedImages = [], newImages = [], ...updateData } = req.body;
 
-  // ✅ force arrays
   if (!Array.isArray(removedImages)) {
     removedImages = JSON.parse(removedImages || "[]");
   }
@@ -96,7 +95,6 @@ export const updateProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  /* 1️⃣ DELETE IMAGES */
   if (removedImages.length > 0) {
     await Promise.all(
       removedImages.map((id) => deleteImage(id))
@@ -107,15 +105,12 @@ export const updateProduct = asyncHandler(async (req, res) => {
     );
   }
 
-  /* 2️⃣ ADD IMAGES */
   if (newImages.length > 0) {
     product.images = [...product.images, ...newImages];
   }
 
-  /* 3️⃣ UPDATE OTHER FIELDS */
   Object.assign(product, updateData);
 
-  // 🚨 FORCE MONGOOSE UPDATE
   product.markModified("images");
 
   const saved = await product.save();
