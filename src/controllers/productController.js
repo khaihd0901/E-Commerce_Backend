@@ -78,19 +78,54 @@ export const getProductById = asyncHandler(async (req, res) => {
 // UPDATE PRODUCT
 // ============================
 export const updateProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true, runValidators: true }
-  );
+  console.log("RAW BODY:", req.body);
 
+  let { removedImages = [], newImages = [], ...updateData } = req.body;
+
+  // ✅ force arrays
+  if (!Array.isArray(removedImages)) {
+    removedImages = JSON.parse(removedImages || "[]");
+  }
+  if (!Array.isArray(newImages)) {
+    newImages = JSON.parse(newImages || "[]");
+  }
+
+  const product = await Product.findById(req.params.id);
   if (!product) {
     res.status(404);
     throw new Error("Product not found");
   }
 
-  res.status(200).json(product);
+  /* 1️⃣ DELETE IMAGES */
+  if (removedImages.length > 0) {
+    await Promise.all(
+      removedImages.map((id) => deleteImage(id))
+    );
+
+    product.images = product.images.filter(
+      (img) => !removedImages.includes(img.public_id)
+    );
+  }
+
+  /* 2️⃣ ADD IMAGES */
+  if (newImages.length > 0) {
+    product.images = [...product.images, ...newImages];
+  }
+
+  /* 3️⃣ UPDATE OTHER FIELDS */
+  Object.assign(product, updateData);
+
+  // 🚨 FORCE MONGOOSE UPDATE
+  product.markModified("images");
+
+  const saved = await product.save();
+
+  console.log("AFTER SAVE:", saved.images);
+
+  res.status(200).json(saved);
 });
+
+
 
 // ============================
 // DELETE PRODUCT
