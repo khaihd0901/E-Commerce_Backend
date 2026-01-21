@@ -3,7 +3,13 @@ import Coupon from "../models/Coupon.js";
 
 // Create a new coupon
 export const createCoupon = asyncHandler(async (req, res) => {
-  const coupon = await Coupon.create(req.body);
+  const { couponName } = req.body;
+  if (!couponName) {
+    res.status(400);
+    throw new Error("Brand name is required");
+  }
+
+  const coupon = await Coupon.create({ couponName });
   res.status(201).json({
     success: true,
     data: coupon,
@@ -36,14 +42,10 @@ export const getCouponById = asyncHandler(async (req, res) => {
 
 // Update coupon
 export const updateCoupon = asyncHandler(async (req, res) => {
-  const coupon = await Coupon.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
 
   if (!coupon) {
     res.status(404);

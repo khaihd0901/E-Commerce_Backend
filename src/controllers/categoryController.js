@@ -4,14 +4,16 @@ import Category from "../models/Category.js";
 // Create a category
 export const createCategory = asyncHandler(async (req, res) => {
   const { categoryName } = req.body;
-
   if (!categoryName) {
     res.status(400);
-    throw new Error("Category name is required");
+    throw new Error("Brand name is required");
   }
 
   const category = await Category.create({ categoryName });
-  res.status(201).json(category);
+  res.status(201).json({
+    success: true,
+    data: category,
+  });
 });
 
 // Read all categories
@@ -23,7 +25,10 @@ export const getCategories = asyncHandler(async (req, res) => {
     throw new Error("No categories found");
   }
 
-  res.status(200).json(categories);
+    res.status(200).json({
+    success: true,
+    data: categories,
+  });
 });
 
 // Read a single category
@@ -35,7 +40,10 @@ export const getCategoryById = asyncHandler(async (req, res) => {
     throw new Error("Category not found");
   }
 
-  res.status(200).json(category);
+  res.status(200).json({
+    success: true,
+    data: category,
+  });
 });
 
 // Update a category
@@ -51,7 +59,10 @@ export const updateCategory = asyncHandler(async (req, res) => {
     throw new Error("Category not found");
   }
 
-  res.status(200).json(category);
+   res.status(200).json({
+    success: true,
+    data: category,
+  });
 });
 
 // Delete a category
@@ -63,5 +74,8 @@ export const deleteCategory = asyncHandler(async (req, res) => {
     throw new Error("Category not found");
   }
 
-  res.status(200).json({ message: "Category deleted" });
+    res.status(200).json({
+    success: true,
+    message: "Coupon deleted successfully",
+  });
 });

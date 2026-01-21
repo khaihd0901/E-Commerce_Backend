@@ -96,12 +96,10 @@ export const updateProduct = asyncHandler(async (req, res) => {
   }
 
   if (removedImages.length > 0) {
-    await Promise.all(
-      removedImages.map((id) => deleteImage(id))
-    );
+    await Promise.all(removedImages.map((id) => deleteImage(id)));
 
     product.images = product.images.filter(
-      (img) => !removedImages.includes(img.public_id)
+      (img) => !removedImages.includes(img.public_id),
     );
   }
 
@@ -120,18 +118,22 @@ export const updateProduct = asyncHandler(async (req, res) => {
   res.status(200).json(saved);
 });
 
-
-
 // ============================
 // DELETE PRODUCT
 // ============================
 export const deleteProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findByIdAndDelete(req.params.id);
+  const product = await Product.findById(req.params.id);
 
   if (!product) {
     res.status(404);
     throw new Error("Product not found");
   }
+  const imgIds = product.images.map((img) => img.public_id);
+  console.log("imgIds", imgIds)
+  if (imgIds.length > 0) {
+    await Promise.all(imgIds.map((id => deleteImage(id) )))
+  }
+  await Product.findByIdAndDelete(req.params.id);
 
   res.status(200).json({ message: "Product deleted successfully" });
 });
@@ -145,9 +147,7 @@ export const addToWishlist = asyncHandler(async (req, res) => {
 
   const user = await User.findById(_id);
 
-  const alreadyAdded = user.wishList.find(
-    (id) => id.toString() === prodId
-  );
+  const alreadyAdded = user.wishList.find((id) => id.toString() === prodId);
 
   let updatedUser;
 
@@ -155,13 +155,13 @@ export const addToWishlist = asyncHandler(async (req, res) => {
     updatedUser = await User.findByIdAndUpdate(
       _id,
       { $pull: { wishList: prodId } },
-      { new: true }
+      { new: true },
     );
   } else {
     updatedUser = await User.findByIdAndUpdate(
       _id,
       { $push: { wishList: prodId } },
-      { new: true }
+      { new: true },
     );
   }
 
@@ -182,13 +182,13 @@ export const ratingProduct = asyncHandler(async (req, res) => {
   }
 
   const alreadyRated = product.ratings.find(
-    (r) => r.postedBy.toString() === _id.toString()
+    (r) => r.postedBy.toString() === _id.toString(),
   );
 
   if (alreadyRated) {
     await Product.updateOne(
       { "ratings._id": alreadyRated._id },
-      { $set: { "ratings.$.star": star, "ratings.$.comment": comment } }
+      { $set: { "ratings.$.star": star, "ratings.$.comment": comment } },
     );
   } else {
     await Product.findByIdAndUpdate(prodId, {
@@ -203,7 +203,7 @@ export const ratingProduct = asyncHandler(async (req, res) => {
   const totalRating = updatedProduct.ratings.length;
   const ratingsSum = updatedProduct.ratings.reduce(
     (sum, item) => sum + item.star,
-    0
+    0,
   );
 
   const actualRating = Math.round(ratingsSum / totalRating);

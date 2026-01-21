@@ -27,7 +27,6 @@ export const signUp = asyncHandler(async (req, res) => {
   res.sendStatus(204);
 });
 
-
 export const signIn = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
 
@@ -51,7 +50,7 @@ export const signIn = asyncHandler(async (req, res) => {
   const accessToken = jwt.sign(
     { userId: user._id },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: ACCESS_TOKEN_TTL }
+    { expiresIn: ACCESS_TOKEN_TTL },
   );
 
   const refreshToken = crypto.randomBytes(64).toString("hex");
@@ -65,7 +64,7 @@ export const signIn = asyncHandler(async (req, res) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "none",
+    sameSite: "strict",
     maxAge: REFRESH_TOKEN_TTL,
   });
 
@@ -76,7 +75,6 @@ export const signIn = asyncHandler(async (req, res) => {
     accessToken,
   });
 });
-
 
 export const adminLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -101,7 +99,7 @@ export const adminLogin = asyncHandler(async (req, res) => {
   const accessToken = jwt.sign(
     { userId: user._id },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: ACCESS_TOKEN_TTL }
+    { expiresIn: ACCESS_TOKEN_TTL },
   );
 
   const refreshToken = crypto.randomBytes(64).toString("hex");
@@ -127,20 +125,39 @@ export const adminLogin = asyncHandler(async (req, res) => {
   });
 });
 
+export const refreshToken = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(401).json({ message: "No refresh token" });
+  }
+
+  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+
+    const newAccessToken = signAccessToken(decoded.id);
+
+    res.json({ accessToken: newAccessToken });
+  });
+};
 
 export const authMe = asyncHandler(async (req, res) => {
   res.status(200).json(req.user);
 });
 
-
 export const signOut = asyncHandler(async (req, res) => {
   const token = req.cookies?.refreshToken;
-
   if (token) {
     await Session.deleteOne({ refreshToken: token });
     res.clearCookie("refreshToken");
   }
-
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+  });
   res.sendStatus(204);
 });
 
@@ -162,14 +179,10 @@ export const sendOTP = asyncHandler(async (req, res) => {
   res.json({ message: "OTP sent successfully" });
 });
 
-
 export const verifyOTP = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
 
-  const hashedOTP = crypto
-    .createHash("sha256")
-    .update(otp)
-    .digest("hex");
+  const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
 
   const user = await User.findOne({
     email,

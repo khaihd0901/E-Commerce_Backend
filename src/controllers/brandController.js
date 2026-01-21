@@ -20,7 +20,10 @@ export const createBrand = asyncHandler(async (req, res) => {
 // Get all brands
 export const getAllBrands = asyncHandler(async (req, res) => {
   const brands = await Brand.find();
-  res.status(200).json(brands);
+    res.status(200).json({
+    success: true,
+    data: brands,
+  });
 });
 
 // Get brand by ID
@@ -32,17 +35,21 @@ export const getBrandById = asyncHandler(async (req, res) => {
     throw new Error("Brand not found");
   }
 
-  res.status(200).json(brand);
+    res.status(200).json({
+    success: true,
+    data: brand,
+  });
 });
 
 // Update brand
 export const updateBrand = asyncHandler(async (req, res) => {
-  const { name, description } = req.body;
-
   const brand = await Brand.findByIdAndUpdate(
     req.params.id,
-    { name, description },
-    { new: true, runValidators: true }
+    req.body,
+    {
+      new: true,
+      runValidators: true,
+    }
   );
 
   if (!brand) {
@@ -51,8 +58,8 @@ export const updateBrand = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json({
-    message: "Brand updated successfully",
-    brand,
+    success: true,
+    data: brand,
   });
 });
 
