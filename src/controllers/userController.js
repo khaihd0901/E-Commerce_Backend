@@ -15,6 +15,9 @@ export const getUsers = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: users });
 });
 
+export const authMe = asyncHandler(async (req, res) => {
+  res.status(200).json(req.user);
+});
 // ============================
 // GET USER BY ID
 // ============================
@@ -168,33 +171,49 @@ export const userCart = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("User not found");
   }
-
-  await Cart.findOneAndDelete({ orderBy: _id });
-
-  const products = [];
-
-  for (const item of cart) {
-    const product = await Product.findById(item.prodId).select("price");
-    products.push({
-      prodId: item.prodId,
-      quantity: item.quantity,
-      price: product.price,
+  // Find existing cart
+  let userCart = await Cart.findOne({ orderBy: _id });
+  if (!userCart) {
+    userCart = new Cart({
+      orderBy: _id,
+      items: [],
+      cartTotal: 0,
     });
   }
 
-  const cartTotal = products.reduce(
+  for (const item of cart) {
+    const product = await Product.findById(item.prodId).select("price");
+    if (!product) continue;
+
+    const existingItemIndex = userCart.items.findIndex(
+      (i) => i.prodId.toString() === item.prodId
+    );
+
+    if (existingItemIndex > -1) {
+      // 🔥 Product exists → increase quantity
+      userCart.items[existingItemIndex].quantity += item.quantity;
+      userCart.items[existingItemIndex].price = product.price; // keep price updated
+    } else {
+      // 🆕 New product
+      userCart.items.push({
+        prodId: item.prodId,
+        quantity: item.quantity,
+        price: product.price,
+      });
+    }
+  }
+
+  // 🔄 Recalculate total
+  userCart.cartTotal = userCart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-  const newCart = await Cart.create({
-    orderBy: _id,
-    items: products,
-    cartTotal,
-  });
+  await userCart.save();
 
-  res.status(200).json(newCart);
+  res.status(200).json(userCart);
 });
+
 
 // ============================
 // GET USER CART
@@ -231,14 +250,21 @@ export const applyCoupon = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   const { coupon } = req.body;
 
-  const validCoupon = await Coupon.findOne({ code: coupon });
+  if (!coupon) {
+    res.status(400);
+    throw new Error("Coupon code is required");
+  }
+
+  const couponCode = coupon.trim().toUpperCase()
+  const validCoupon = await Coupon.findOne({ code: couponCode });
+
   if (
     !validCoupon ||
     !validCoupon.isActive ||
     validCoupon.expiryDate < new Date()
   ) {
     res.status(400);
-    throw new Error("Invalid coupon");
+    throw new Error("Invalid or expired coupon");
   }
 
   const cart = await Cart.findOne({ orderBy: _id });
@@ -262,7 +288,11 @@ export const applyCoupon = asyncHandler(async (req, res) => {
   cart.totalAfterDiscount = totalAfterDiscount;
   await cart.save();
 
-  res.status(200).json({ totalAfterDiscount });
+  res.status(200).json({
+    success: true,
+    coupon: couponCode,
+    totalAfterDiscount,
+  });
 });
 
 // ============================

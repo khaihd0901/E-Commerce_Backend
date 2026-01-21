@@ -6,8 +6,7 @@ const CouponSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      uppercase: true,
-      trim: true,
+      set: (value) => value.replace(/\s+/g, "").toUpperCase().trim(),
     },
     des: {
       type: String,

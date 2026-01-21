@@ -78,7 +78,6 @@ export const getProductById = asyncHandler(async (req, res) => {
 // UPDATE PRODUCT
 // ============================
 export const updateProduct = asyncHandler(async (req, res) => {
-  console.log("RAW BODY:", req.body);
 
   let { removedImages = [], newImages = [], ...updateData } = req.body;
 
@@ -113,8 +112,6 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
   const saved = await product.save();
 
-  console.log("AFTER SAVE:", saved.images);
-
   res.status(200).json(saved);
 });
 
@@ -129,7 +126,6 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
   const imgIds = product.images.map((img) => img.public_id);
-  console.log("imgIds", imgIds)
   if (imgIds.length > 0) {
     await Promise.all(imgIds.map((id => deleteImage(id) )))
   }

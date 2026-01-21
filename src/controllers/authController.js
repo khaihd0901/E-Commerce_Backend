@@ -6,45 +6,44 @@ import User from "../models/User.js";
 import Session from "../models/Session.js";
 import { sendVerificationEmail } from "../utils/emailHandler.js";
 
-const ACCESS_TOKEN_TTL = "60m";
+const ACCESS_TOKEN_TTL = "30m";
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000; // 14 days
 
 export const signUp = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!username || !email || !password) {
+  if (!email || !password) {
     res.status(400);
     throw new Error("Cannot miss username, password, email");
   }
 
-  const userExist = await User.findOne({ username });
+  const userExist = await User.findOne({ email });
   if (userExist) {
     res.status(409);
     throw new Error("User already exists");
   }
 
-  await User.create({ username, email, password });
+  await User.create({ email, password });
   res.sendStatus(204);
 });
 
 export const signIn = asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
+  const { email, password } = req.body;
+  if (!email || !password) {
     res.status(400);
-    throw new Error("Missing username or password");
+    throw new Error("Missing email or password");
   }
 
-  const user = await User.findOne({ username });
+  const user = await User.findOne({ email });
   if (!user || !user.password) {
     res.status(401);
-    throw new Error("Username or password not correct");
+    throw new Error("email or password not correct");
   }
 
   const passwordCorrect = await bcrypt.compare(password, user.password);
   if (!passwordCorrect) {
     res.status(401);
-    throw new Error("Username or password not correct");
+    throw new Error("email or password not correct");
   }
 
   const accessToken = jwt.sign(
@@ -71,7 +70,7 @@ export const signIn = asyncHandler(async (req, res) => {
   res.status(200).json({
     _id: user._id,
     email: user.email,
-    message: `User ${user.username} login success`,
+    message: `User ${user.email} login success`,
     accessToken,
   });
 });
@@ -126,26 +125,30 @@ export const adminLogin = asyncHandler(async (req, res) => {
 });
 
 export const refreshToken = async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
+  const token = req.cookies.refreshToken;
 
-  if (!refreshToken) {
+  if (!token) {
     return res.status(401).json({ message: "No refresh token" });
   }
+  const session = await Session.findOne({ refreshToken: token });
+  if (!session) {
+    return res.status(403).json({ message: "Invalid token or expired" });
+  }
 
-  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(403).json({ message: "Invalid refresh token" });
-    }
+  if (session.expiresAt < new Date()) {
+    return res.status(403).json({ message: "Token expired" });
+  }
 
-    const newAccessToken = signAccessToken(decoded.id);
+  const accessToken = jwt.sign(
+    {
+      userId: session.userId,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL },
+  );
 
-    res.json({ accessToken: newAccessToken });
-  });
+  res.json({ accessToken: accessToken });
 };
-
-export const authMe = asyncHandler(async (req, res) => {
-  res.status(200).json(req.user);
-});
 
 export const signOut = asyncHandler(async (req, res) => {
   const token = req.cookies?.refreshToken;
@@ -160,7 +163,6 @@ export const signOut = asyncHandler(async (req, res) => {
   });
   res.sendStatus(204);
 });
-
 
 export const sendOTP = asyncHandler(async (req, res) => {
   const { email } = req.body;

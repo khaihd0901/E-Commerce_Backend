@@ -3,13 +3,12 @@ import Coupon from "../models/Coupon.js";
 
 // Create a new coupon
 export const createCoupon = asyncHandler(async (req, res) => {
-  const { couponName } = req.body;
-  if (!couponName) {
+  const { code, ...values } = req.body;
+  if (!code) {
     res.status(400);
     throw new Error("Brand name is required");
   }
-
-  const coupon = await Coupon.create({ couponName });
+  const coupon = await Coupon.create({ code,...values });
   res.status(201).json({
     success: true,
     data: coupon,
