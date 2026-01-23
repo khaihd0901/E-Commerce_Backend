@@ -1,10 +1,11 @@
 import express from 'express';
 import {protectedRoute} from '../middlewares/authMiddleware.js'
-import { signUp, signIn, signOut, sendOTP, verifyOTP, adminLogin, refreshToken } from '../controllers/authController.js';
+import { signUp, signIn, signOut, sendOTP, verifyOTP, adminLogin, refreshToken, verifyEmail } from '../controllers/authController.js';
 
 const router = express.Router();
 
 router.post('/signup', signUp);
+router.post('/verify-email/:token',verifyEmail)
 router.post('/signin', signIn);
 router.post('/admin-login', adminLogin);
 router.post('/signout', signOut)

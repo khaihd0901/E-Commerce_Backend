@@ -4,17 +4,26 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import Session from "../models/Session.js";
-import { sendVerificationEmail } from "../utils/emailHandler.js";
+import {
+  sendVerificationEmail,
+  sendAccountVerificationEmail,
+} from "../utils/emailHandler.js";
 
-const ACCESS_TOKEN_TTL = "30m";
-const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000; // 14 days
+const ACCESS_TOKEN_TTL = "15m";
+const REFRESH_TOKEN_SORT_TTL = 24 * 60 * 60 * 1000; // 1 days
+const REFRESH_TOKEN_LONG_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export const signUp = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, confirmPassword } = req.body;
 
-  if (!email || !password) {
+  if (!email || !password || !confirmPassword) {
     res.status(400);
-    throw new Error("Cannot miss username, password, email");
+    throw new Error("Email, password and confirm password are required");
+  }
+
+  if (password !== confirmPassword) {
+    res.status(400);
+    throw new Error("Passwords do not match");
   }
 
   const userExist = await User.findOne({ email });
@@ -23,12 +32,72 @@ export const signUp = asyncHandler(async (req, res) => {
     throw new Error("User already exists");
   }
 
-  await User.create({ email, password });
-  res.sendStatus(204);
+  const user = await User.create({ email, password });
+
+  await user.createAccountVerifyToken();
+  await user.save();
+
+  const verifyLink = `${process.env.CLIENT_URL}/verify-email/${user.accountVerifyToken}`;
+  const verifyExpireTime = user.accountVerifyExpires;
+  await sendAccountVerificationEmail(email, verifyLink, verifyExpireTime);
+
+  res.status(201).json({
+    message: "Account created. Please verify your email",
+  });
 });
 
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+
+  const user = await User.findOne({
+    accountVerifyToken: token,
+    accountVerifyExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error("Invalid or expired token");
+  }
+
+  user.isVerified = true;
+  user.accountVerifyToken = undefined;
+  user.accountVerifyExpires = undefined;
+
+  await user.save();
+
+  const accessToken = jwt.sign(
+    { userId: user._id },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL }
+  );
+
+  const refreshToken = crypto.randomBytes(64).toString("hex");
+
+  await Session.create({
+    userId: user._id,
+    refreshToken,
+    expiresAt: new Date(Date.now() + REFRESH_TOKEN_LONG_TTL),
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: REFRESH_TOKEN_SORT_TTL,
+  });
+
+  res.status(200).json({
+    message: "Email verified & logged in",
+    accessToken,
+      id: user._id,
+      email: user.email,
+  });
+});
+
+
 export const signIn = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, rememberMe } = req.body;
+  console.log(req.body);
   if (!email || !password) {
     res.status(400);
     throw new Error("Missing email or password");
@@ -46,10 +115,18 @@ export const signIn = asyncHandler(async (req, res) => {
     throw new Error("email or password not correct");
   }
 
+  if (!user.isVerified) {
+    res.status(403).json({ message: "Please verify your email first" });
+    throw new Error("Please verify your email first");
+  }
+  const REFRESH_TOKEN_TTL = rememberMe
+    ? REFRESH_TOKEN_LONG_TTL // 30 days
+    : REFRESH_TOKEN_SORT_TTL; // 1 day
+  console.log(REFRESH_TOKEN_TTL);
   const accessToken = jwt.sign(
     { userId: user._id },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: ACCESS_TOKEN_TTL },
+    { expiresIn: REFRESH_TOKEN_TTL },
   );
 
   const refreshToken = crypto.randomBytes(64).toString("hex");
@@ -76,7 +153,7 @@ export const signIn = asyncHandler(async (req, res) => {
 });
 
 export const adminLogin = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, rememberMe } = req.body;
 
   if (!email || !password) {
     res.status(400);
@@ -94,6 +171,10 @@ export const adminLogin = asyncHandler(async (req, res) => {
     res.status(401);
     throw new Error("Email or password not correct");
   }
+
+  const REFRESH_TOKEN_TTL = rememberMe
+    ? REFRESH_TOKEN_LONG_TTL // 30 days
+    : REFRESH_TOKEN_SORT_TTL; // 1 day
 
   const accessToken = jwt.sign(
     { userId: user._id },

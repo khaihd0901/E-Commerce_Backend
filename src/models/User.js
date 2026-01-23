@@ -40,8 +40,6 @@ const UserSchema = mongoose.Schema(
         default: [],
       },
     ],
-    otp: String,
-    otpExpires: Date,
     isVerified: {
       type: Boolean,
       default: false,
@@ -51,8 +49,11 @@ const UserSchema = mongoose.Schema(
       default: false,
     },
     passWordChangedAt: Date,
-    passWordResetToken: String,
+    passWordResetOTP: String,
     passWordResetExpires: Date,
+
+    accountVerifyToken: String,
+    accountVerifyExpires: Date,
   },
   {
     timestamps: true,
@@ -64,28 +65,37 @@ UserSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
-UserSchema.methods.createPasswordResetToken = function () {
-  const resetToken = crypto.randomBytes(32).toString("hex");
-  this.passWordResetToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
+// UserSchema.methods.createPasswordResetToken = function () {
+//   const resetToken = crypto.randomBytes(32).toString("hex");
+//   this.passWordResetToken = crypto
+//     .createHash("sha256")
+//     .update(resetToken)
+//     .digest("hex");
 
-  this.passWordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+//   this.passWordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-  return resetToken; // send this via email
-};
+//   return resetToken; // send this via email
+// };
 UserSchema.methods.createOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
 
-  this.otp = crypto
+  this.passWordResetOTP = crypto
     .createHash("sha256")
     .update(otp)
     .digest("hex");
 
-  this.otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+  this.passWordResetExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
   return otp;
 };
+
+UserSchema.methods.createAccountVerifyToken = function () {
+  const verifyToken = crypto.randomBytes(32).toString('hex')
+  this.accountVerifyToken = crypto.createHash('sha256').update(verifyToken).digest('hex')
+
+  this.accountVerifyExpires = Date.now() + 24 * 60 * 60 * 1000 // 1 day
+}
+UserSchema.index({ accountVerifyExpires: 1 }, { expireAfterSeconds: 0 });
+
 const User = mongoose.model("User", UserSchema);
 export default User;

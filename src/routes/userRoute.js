@@ -1,5 +1,5 @@
 import express from 'express'
-import { getUsers,getUserById, updateUser, deleteUser,updatePassword, forgotPasswordToken, resetPassword, getWishlist, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getAllOrders, getOrderbyUser, authMe } from '../controllers/userController.js';
+import { getUsers,getUserById, updateUser, deleteUser,updatePassword, forgotPasswordOTP, resetPassword, getWishlist, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getAllOrders, getOrderbyUser, authMe } from '../controllers/userController.js';
 import {protectedRoute, isAdmin} from '../middlewares/authMiddleware.js';
 
 
@@ -9,8 +9,8 @@ router.get('/me',protectedRoute, authMe);
 router.put('/update/:id',protectedRoute, updateUser);
 router.delete('/:id',protectedRoute, isAdmin, deleteUser);
 router.put('/password',protectedRoute, updatePassword);
-router.post('/forgot-password-token', forgotPasswordToken);
-router.post('/reset-password/:token', resetPassword );
+router.post('/forgot-password', forgotPasswordOTP);
+router.post('/reset-password', resetPassword );
 router.post('/wishlist',protectedRoute, getWishlist);
 router.post('/cart',protectedRoute, userCart);
 router.post('/get-cart',protectedRoute, getUserCart);

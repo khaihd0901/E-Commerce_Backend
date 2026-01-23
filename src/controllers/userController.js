@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import User from "../models/User.js";
 import Product from "../models/Product.js";
 import Session from "../models/Session.js";
-import { sendResetEmail } from "../utils/emailHandler.js";
+import { sendResetPasswordOTP } from "../utils/emailHandler.js";
 import Cart from "../models/Cart.js";
 import Coupon from "../models/Coupon.js";
 import Order from "../models/Order.js";
@@ -99,7 +99,7 @@ export const updatePassword = asyncHandler(async (req, res) => {
 // ============================
 // FORGOT PASSWORD TOKEN
 // ============================
-export const forgotPasswordToken = asyncHandler(async (req, res) => {
+export const forgotPasswordOTP = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   const user = await User.findOne({ email });
@@ -108,19 +108,9 @@ export const forgotPasswordToken = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  const resetToken = await user.createPasswordResetToken();
+  const OTP = await user.createOTP();
   await user.save();
-
-  const resetUrl = `Hi, Please click on this link to reset your password, this link is valid for 10 minutes:
-  http://localhost:5001/api/user/reset-password/${resetToken}`;
-
-  const data = {
-    to: email,
-    subject: "Password Reset Link",
-    html: resetUrl,
-  };
-
-  await sendResetEmail(email, data);
+  await sendResetPasswordOTP(email, OTP);
 
   res.status(200).json({ message: "Email sent successfully" });
 });
@@ -129,11 +119,10 @@ export const forgotPasswordToken = asyncHandler(async (req, res) => {
 // RESET PASSWORD
 // ============================
 export const resetPassword = asyncHandler(async (req, res) => {
-  const { token } = req.params;
-  const { password } = req.body;
+  const { password, OTP } = req.body;
 
   const user = await User.findOne({
-    passWordResetToken: token,
+    passWordResetOTP: OTP,
     passWordResetExpires: { $gt: Date.now() },
   });
 
@@ -143,7 +132,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
   }
 
   user.password = password;
-  user.passWordResetToken = undefined;
+  user.passWordResetOTP = undefined;
   user.passWordResetExpires = undefined;
   await user.save();
 
