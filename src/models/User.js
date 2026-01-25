@@ -49,8 +49,8 @@ const UserSchema = mongoose.Schema(
       default: false,
     },
     passWordChangedAt: Date,
-    passWordResetOTP: String,
     passWordResetExpires: Date,
+    passWordResetOTP: String,
 
     accountVerifyToken: String,
     accountVerifyExpires: Date,
@@ -83,7 +83,6 @@ UserSchema.methods.createOTP = function () {
     .createHash("sha256")
     .update(otp)
     .digest("hex");
-
   this.passWordResetExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
   return otp;

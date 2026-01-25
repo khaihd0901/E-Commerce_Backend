@@ -6,6 +6,8 @@ import { sendResetPasswordOTP } from "../utils/emailHandler.js";
 import Cart from "../models/Cart.js";
 import Coupon from "../models/Coupon.js";
 import Order from "../models/Order.js";
+import crypto from "crypto";
+
 
 // ============================
 // GET ALL USERS
@@ -114,15 +116,33 @@ export const forgotPasswordOTP = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Email sent successfully" });
 });
+export const verifyOTP = asyncHandler(async (req, res) => {
+  const {OTP,email}= req.body
+  const hashedOTP = crypto.createHash("sha256").update(OTP).digest("hex");
 
+  const user = await User.findOne({
+    email,
+    passWordResetOTP: hashedOTP,
+    passWordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error("Invalid or expired OTP");
+  }
+  res.json({ message: "OTP verified successfully" });
+});
 // ============================
 // RESET PASSWORD
 // ============================
 export const resetPassword = asyncHandler(async (req, res) => {
-  const { password, OTP } = req.body;
+  const { password, OTP,email } = req.body;
+console.log(req.body)
+  const hashedOTP = crypto.createHash("sha256").update(OTP).digest("hex");
 
   const user = await User.findOne({
-    passWordResetOTP: OTP,
+    email: email,
+    passWordResetOTP: hashedOTP,
     passWordResetExpires: { $gt: Date.now() },
   });
 
