@@ -1,63 +1,56 @@
 import mongoose from "mongoose";
 
 const ProductSchema = mongoose.Schema({
-  productName: {
+  title: { type: String, required: true, trim: true },
+
+  brand: { type: mongoose.Schema.Types.ObjectId, ref: "Brand" },
+
+  des: String,
+
+  price: { type: Number, required: true, min: 0 },
+  discount: { type: Number, default: 0 },
+
+  unit: {
     type: String,
-    required: true,
-    trim: true,
-    unique: false,
+    enum: ["kg", "g", "bundle", "piece"],
+    default: "kg",
   },
-  brand: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Brand",
-  },
-  des: {
-    type: String,
-    trim: true,
-  },
-  price: {
-    type: Number,
-    required: true,
-    min: 0,
-  },
+  weight: { type: Number, min: 0 },
+
+  stock: { type: Number, default: 0 },
+  sold: { type: Number, default: 0 },
+
+  category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+
   tags: [],
   images: [],
-  stock: {
-    type: Number,
-    default: 0,
-    min: 0,
-  },
-  sold: {
-    type: Number,
-    default: 0,
-    min: 0,
-  },
-  category: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Category",
-  },
-  isPublished: {
-    type: Boolean,
-    default: false,
-  },
-  isFeatured: {
-    type: Boolean,
-    default: false,
+
+  harvestDate: Date,
+  expiryDate: Date,
+
+  origin: String,
+  farmName: String,
+
+  isOrganic: { type: Boolean, default: false },
+  certifications: [],
+
+  storage: String,
+
+  status: {
+    type: String,
+    enum: ["available", "out_of_stock", "seasonal"],
+    default: "available",
   },
   ratings: [
     {
       star: Number,
-      postedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
+      postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       comment: String,
     },
   ],
-  ratingsQuantity: {
-    type: Number,
-    default: 0,
-  },
+  ratingsQuantity: { type: Number, default: 0 },
 });
-const Product = mongoose.model("Product", ProductSchema);
+
+const Product = mongoose.model('Product', ProductSchema);
+
 export default Product;

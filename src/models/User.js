@@ -10,6 +10,17 @@ const UserSchema = mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    firstName: {
+      type: String,
+      required: true,
+    },
+    lastName: {
+      type: String,
+      required: true,
+    },
+    fullName:{
+      type: String,
+    },
     password: {
       type: String,
       required: true,
@@ -57,7 +68,7 @@ const UserSchema = mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 // Hash password
 UserSchema.pre("save", async function (next) {
@@ -79,21 +90,21 @@ UserSchema.pre("save", async function (next) {
 UserSchema.methods.createOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
 
-  this.passWordResetOTP = crypto
-    .createHash("sha256")
-    .update(otp)
-    .digest("hex");
+  this.passWordResetOTP = crypto.createHash("sha256").update(otp).digest("hex");
   this.passWordResetExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
   return otp;
 };
 
 UserSchema.methods.createAccountVerifyToken = function () {
-  const verifyToken = crypto.randomBytes(32).toString('hex')
-  this.accountVerifyToken = crypto.createHash('sha256').update(verifyToken).digest('hex')
+  const verifyToken = crypto.randomBytes(32).toString("hex");
+  this.accountVerifyToken = crypto
+    .createHash("sha256")
+    .update(verifyToken)
+    .digest("hex");
 
-  this.accountVerifyExpires = Date.now() + 24 * 60 * 60 * 1000 // 1 day
-}
+  this.accountVerifyExpires = Date.now() + 24 * 60 * 60 * 1000; // 1 day
+};
 UserSchema.index({ accountVerifyExpires: 1 }, { expireAfterSeconds: 0 });
 
 const User = mongoose.model("User", UserSchema);

@@ -9,19 +9,13 @@ export const createCoupon = asyncHandler(async (req, res) => {
     throw new Error("Brand name is required");
   }
   const coupon = await Coupon.create({ code,...values });
-  res.status(201).json({
-    success: true,
-    data: coupon,
-  });
+  res.status(201).json(coupon);
 });
 
 // Get all coupons
 export const getAllCoupons = asyncHandler(async (req, res) => {
   const coupons = await Coupon.find();
-  res.status(200).json({
-    success: true,
-    data: coupons,
-  });
+  res.status(200).json(coupons);
 });
 
 // Get single coupon by ID
@@ -33,10 +27,7 @@ export const getCouponById = asyncHandler(async (req, res) => {
     throw new Error("Coupon not found");
   }
 
-  res.status(200).json({
-    success: true,
-    data: coupon,
-  });
+  res.status(200).json(coupon);
 });
 
 // Update coupon
@@ -51,10 +42,7 @@ export const updateCoupon = asyncHandler(async (req, res) => {
     throw new Error("Coupon not found");
   }
 
-  res.status(200).json({
-    success: true,
-    data: coupon,
-  });
+  res.status(200).json(coupon);
 });
 
 // Delete coupon

@@ -8,7 +8,7 @@ const CategorySchema = mongoose.Schema(
       trim: true,
       unique: true,
     },
-    product: [
+    products: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product",

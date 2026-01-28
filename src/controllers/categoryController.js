@@ -10,10 +10,7 @@ export const createCategory = asyncHandler(async (req, res) => {
   }
 
   const category = await Category.create({ categoryName });
-  res.status(201).json({
-    success: true,
-    data: category,
-  });
+  res.status(201).json(category);
 });
 
 // Read all categories
@@ -25,10 +22,7 @@ export const getCategories = asyncHandler(async (req, res) => {
     throw new Error("No categories found");
   }
 
-    res.status(200).json({
-    success: true,
-    data: categories,
-  });
+    res.status(200).json(categories);
 });
 
 // Read a single category
@@ -40,10 +34,7 @@ export const getCategoryById = asyncHandler(async (req, res) => {
     throw new Error("Category not found");
   }
 
-  res.status(200).json({
-    success: true,
-    data: category,
-  });
+  res.status(200).json(category);
 });
 
 // Update a category
@@ -59,10 +50,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
     throw new Error("Category not found");
   }
 
-   res.status(200).json({
-    success: true,
-    data: category,
-  });
+   res.status(200).json(category);
 });
 
 // Delete a category

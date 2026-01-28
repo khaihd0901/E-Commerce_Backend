@@ -14,7 +14,7 @@ import crypto from "crypto";
 // ============================
 export const getUsers = asyncHandler(async (req, res) => {
   const users = await User.find().select("-hashedPassword");
-  res.status(200).json({ success: true, data: users });
+  res.status(200).json(users);
 });
 
 export const authMe = asyncHandler(async (req, res) => {
@@ -31,24 +31,38 @@ export const getUserById = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  res.status(200).json({ success: true, data: user });
+  res.status(200).json(user);
 });
 
 // ============================
 // UPDATE USER
 // ============================
 export const updateUser = asyncHandler(async (req, res) => {
-  const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const { firstName, lastName, phone, address } = req.body;
+
+  const updateData = {
+    firstName,
+    lastName,
+    phone,
+    address,
+    fullName: `${firstName} ${lastName}`,
+  };
+
+  const user = await User.findByIdAndUpdate(
+    req.params.id,
+    updateData,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
 
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
 
-  res.status(200).json({ success: true, data: user });
+  res.status(200).json(user);
 });
 
 // ============================
@@ -373,7 +387,7 @@ export const getOrderbyUser = asyncHandler(async (req, res) => {
 // ============================
 export const getAllOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find().populate("orderBy");
-  res.status(200).json({ success: true, data: orders });
+  res.status(200).json(orders);
 });
 
 // ============================
